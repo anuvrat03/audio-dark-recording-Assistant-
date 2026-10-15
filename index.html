@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dark Speech & Translation Assistant</title>
+    <title>Dark Speech Assistant</title>
     <style>
         /* Modern Dark Theme Tailored for Samsung Galaxy S20 FE */
         * {
@@ -128,7 +128,7 @@
             border-color: #ef4444;
         }
 
-        /* Transcription & Translation Output Box */
+        /* Transcription Output Box */
         .output-box {
             background: #0f172a;
             border: 1px solid #334155;
@@ -170,7 +170,7 @@
 
     <div class="card" id="main-card">
         <h2>Dark Speech Assistant</h2>
-        <p>Record notes in pitch-black mode. Automatically captures your speech in English or Hindi instantly for free with zero API keys.</p>
+        <p>Record notes in pitch-black mode. Captures your speech instantly in English or Hindi for free with zero API keys required.</p>
         
         <div id="error-msg" class="error-msg"></div>
 
@@ -219,7 +219,7 @@
             recognition = new SpeechRecognition();
             recognition.continuous = true;
             recognition.interimResults = true;
-            recognition.lang = 'en-IN'; // Set to Indian English & bilingual speech support
+            recognition.lang = 'en-IN'; // Supports Indian English and bilingual speech naturally
 
             recognition.onresult = (event) => {
                 let interim = "";
