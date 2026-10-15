@@ -1,42 +1,43 @@
-# 🌙 Dark Screen Assistant
+# 🌙 Dark Speech & Translation Assistant
 
-An elegant, distraction-free web tool designed for recording voice and screen notes with a pitch-black display. Developed specifically for mobile execution, this tool eliminates screen glare, saves battery power, and prevents visual fatigue during long lectures, study sessions, or research meetings.
+An interactive, distraction-free web application designed for capturing spoken notes, lectures, and research thoughts in a pitch-black display mode. Developed specifically for mobile execution, this tool eliminates visual screen glare, saves phone battery, and automatically converts speech into clean, shareable text without relying on external API credits.
 
 ---
 
 ## 🌟 Key Features
 
-* **Dark Screen Mode**: Blanks out the screen with a pitch-black display to eliminate visual distraction and reduce power consumption.
-* **Faded Floating Control**: A subtle, semi-transparent grey floating button lets you stop recording anytime without disrupting your focus.
-* **Privacy & Local Processing**: All recordings are processed safely inside your mobile browser without uploading data to untrusted third-party servers.
-* **Instant Native Sharing**: One-tap native Android sharing lets you send your recorded notes directly to WhatsApp, Google Drive, Gmail, or local storage.
-* **Direct Downloads**: High-clarity audio/video files can be downloaded instantly to your phone's local `Downloads` folder.
+* **Dark Screen Mode**: Blanks out the display with a pitch-black overlay to prevent visual fatigue and save battery power during long study sessions.
+* **One-Thumb Floating Stop Button**: Features a large, comfortable, raised stop control positioned specifically for natural one-handed holding on mobile devices.
+* **Free In-Browser Speech Recognition**: Uses native browser speech processing (`webkitSpeechRecognition`) to transcribe spoken thoughts in real-time with zero API costs or balance limits.
+* **Multilingual Speech Support**: Seamlessly captures voice notes in English, Hindi, or mixed conversational phrases.
+* **Instant Native Sharing**: Includes a one-tap Android share button to send transcripts directly to WhatsApp, Google Drive, Gmail, or notes apps.
+* **Local Text Export**: Allows one-click downloading of captured transcripts directly to your phone's `Downloads` folder as `.txt` files.
 
 ---
 
-## 📱 Designed For Mobile Workflow
+## 📱 Mobile-First Design & Architecture
 
-This application is optimized for seamless operation on mobile browsers (Chrome / Samsung Internet) on devices like the **Samsung Galaxy S20 FE**. By leveraging secure **HTTPS via GitHub Pages**, it bypasses local file permission restrictions and enables smooth microphone and media recording.
+This application is optimized for smooth operation on mobile web browsers (Google Chrome / Samsung Internet) on devices like the **Samsung Galaxy S20 FE**. By hosting the single HTML file over secure HTTPS via **GitHub Pages**, the tool runs with full microphone access without complex software installation.
 
 ---
 
 ## 🚀 How To Use
 
-1. **Open the App**: Launch the live GitHub Pages link on your mobile phone browser.
-2. **Start Recording**: Tap **Start Dark Recording** and grant microphone/camera permissions when prompted by your browser.
-3. **Focus Without Distraction**: The screen turns completely black while quietly recording your notes.
-4. **Stop Recording**: Tap the faded grey **Stop Recording** button floating near the bottom-right corner.
-5. **Review & Share**: Use the built-in media player to review your recording, then tap **Share Note** or **Save to Phone Downloads**.
+1. **Launch the Web App**: Open your live GitHub Pages link on your mobile phone browser.
+2. **Start Dark Session**: Tap **Start Dark Recording** and grant microphone access when prompted.
+3. **Speak Naturally**: Focus on your lecture or research thoughts while the screen remains pitch black to preserve focus and battery.
+4. **Stop Recording**: Tap the raised **⏹ STOP RECORDING** button with your thumb.
+5. **Review & Export**: View your transcribed text on screen, then tap **📲 Share Transcript** or **💾 Save Notes as Text File**.
 
 ---
 
 ## 🛠️ Technology Stack
 
-* **HTML5 / CSS3**: Responsive dark-themed UI built with modern flexbox and backdrop filters.
-* **JavaScript (WebRTC & MediaRecorder API)**: Handles high-clarity media capturing, blob conversion, and stream lifecycle management.
-* **Web Share API**: Triggers the native Android share menu for frictionless file export.
-* **GitHub Pages**: Free, secure HTTPS hosting.
+* **HTML5 / Modern CSS3**: Responsive flexbox layout with blur filters and animated dark overlay indicators.
+* **JavaScript (Web Speech API)**: Handles real-time speech-to-text recognition directly in the client browser.
+* **Web Share & Blob API**: Triggers native mobile share drawers and local text file generation.
+* **GitHub Pages**: Fast, secure HTTPS web hosting.
 
 ---
 
-*Created for academic faculty, researchers, and students to enhance productivity and focus.*
+*Created to enhance productivity, research workflows, and skill adoption for faculty, researchers, and students.*
