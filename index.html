@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dark Audio Assistant & Translator</title>
     <style>
-        /* Modern Dark Theme Tailored for Samsung Galaxy S20 FE */
+        /* Modern Dark Theme Tailored for Samsung Galaxy S20 FE Screen */
         * {
             box-sizing: border-box;
         }
@@ -361,7 +361,7 @@
             }
         });
 
-        // Process Audio File using Direct Google Gemini Flash API
+        // Process Audio File using Google Gemini 2.5 Flash REST Endpoint
         async function processAudioWithGemini(audioBlob, apiKey) {
             loadingBox.style.display = 'block';
 
@@ -372,7 +372,7 @@
                     const base64Audio = reader.result.split(',')[1];
                     const mimeType = audioBlob.type || 'audio/webm';
 
-                    // Direct Call to Google Gemini REST Endpoint
+                    // Updated REST API endpoint for Gemini 2.5 Flash
                     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
                     const response = await fetch(url, {
