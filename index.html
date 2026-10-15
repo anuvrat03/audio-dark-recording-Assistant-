@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dark Screen Assistant</title>
+    <title>Dark Audio Note Assistant</title>
     <style>
         /* Modern Dark Theme Tailored for Samsung Galaxy S20 FE */
         * {
@@ -85,7 +85,7 @@
             background-color: #4f46e5;
         }
 
-        /* Full Blackout Overlay */
+        /* Full Blackout Overlay - Centered Flex Layout */
         #recording-overlay {
             position: fixed;
             top: 0;
@@ -115,7 +115,7 @@
             100% { opacity: 0.3; }
         }
 
-        /* Prominent Stop Button For One-Thumb Access */
+        /* Large, Raised, Prominent Stop Button - Easy One-Thumb Access */
         #stop-btn {
             background-color: #334155;
             color: #ffffff;
@@ -137,13 +137,12 @@
             transform: scale(0.96);
         }
 
-        video {
+        /* Embedded Audio Playback Player */
+        audio {
             width: 100%;
             margin-top: 15px;
             margin-bottom: 15px;
-            border-radius: 10px;
             display: none;
-            background-color: #000000;
         }
 
         .error-msg {
@@ -161,14 +160,14 @@
 <body>
 
     <div class="card" id="main-card">
-        <h2>Dark Screen Assistant</h2>
-        <p>Records lecture notes with a pitch-black screen using your rear camera to eliminate distraction and save battery power.</p>
+        <h2>Dark Audio Assistant</h2>
+        <p>Records high-clarity voice notes and lecture audio with a pitch-black screen to eliminate distraction and save battery.</p>
         
         <div id="error-msg" class="error-msg"></div>
 
         <button class="btn" id="start-btn">Start Dark Recording</button>
 
-        <video id="playback-video" controls></video>
+        <audio id="playback-audio" controls></audio>
 
         <!-- Action Buttons for Native Sharing & Download -->
         <button class="btn btn-share" id="share-btn">📲 Share Note (WhatsApp / Drive / Apps)</button>
@@ -177,7 +176,7 @@
 
     <!-- Blackout Overlay Screen -->
     <div id="recording-overlay">
-        <div class="recording-status">● RECORDING (REAR CAMERA)</div>
+        <div class="recording-status">● RECORDING AUDIO (DARK DISPLAY)</div>
         <button id="stop-btn">⏹ STOP RECORDING</button>
     </div>
 
@@ -194,10 +193,10 @@
         const downloadBtn = document.getElementById('download-btn');
         const overlay = document.getElementById('recording-overlay');
         const mainCard = document.getElementById('main-card');
-        const playbackVideo = document.getElementById('playback-video');
+        const playbackAudio = document.getElementById('playback-audio');
         const errorMsg = document.getElementById('error-msg');
 
-        // Start Recording Process with Strict Rear Camera Enforcement
+        // Start High-Clarity Audio Recording Process
         startBtn.addEventListener('click', async () => {
             errorMsg.style.display = 'none';
             shareBtn.style.display = 'none';
@@ -205,50 +204,13 @@
             recordedChunks = [];
 
             try {
-                let videoConstraint = { facingMode: { exact: "environment" } };
-                
-                try {
-                    // Attempt strict rear camera constraint first
-                    mediaStream = await navigator.mediaDevices.getUserMedia({
-                        video: videoConstraint,
-                        audio: true
-                    });
-                } catch (strictErr) {
-                    // Fallback: Scan available device cameras to explicitly locate the rear-facing lens
-                    const devices = await navigator.mediaDevices.enumerateDevices();
-                    const videoDevices = devices.filter(d => d.kind === 'videoinput');
-                    const rearCamera = videoDevices.find(d => 
-                        d.label.toLowerCase().includes('back') || 
-                        d.label.toLowerCase().includes('rear') || 
-                        d.label.toLowerCase().includes('environment') ||
-                        d.label.toLowerCase().includes('tele') ||
-                        d.label.toLowerCase().includes('ultra')
-                    );
+                // Request dedicated microphone stream (zero camera/selfie overhead)
+                mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-                    if (rearCamera) {
-                        mediaStream = await navigator.mediaDevices.getUserMedia({
-                            video: { deviceId: { exact: rearCamera.deviceId } },
-                            audio: true
-                        });
-                    } else if (videoDevices.length > 1) {
-                        // Usually the second camera index on mobile phones is the rear camera
-                        mediaStream = await navigator.mediaDevices.getUserMedia({
-                            video: { deviceId: { exact: videoDevices[videoDevices.length - 1].deviceId } },
-                            audio: true
-                        });
-                    } else {
-                        // Ultimate fallback
-                        mediaStream = await navigator.mediaDevices.getUserMedia({
-                            video: true,
-                            audio: true
-                        });
-                    }
-                }
-
-                // Determine supported encoding format
-                let mimeType = 'video/webm';
-                if (!MediaRecorder.isTypeSupported('video/webm')) {
-                    mimeType = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : '';
+                // Determine supported audio container format
+                let mimeType = 'audio/webm';
+                if (!MediaRecorder.isTypeSupported('audio/webm')) {
+                    mimeType = MediaRecorder.isTypeSupported('audio/ogg') ? 'audio/ogg' : '';
                 }
 
                 const options = mimeType ? { mimeType } : {};
@@ -261,16 +223,16 @@
                 };
 
                 mediaRecorder.onstop = () => {
-                    const actualMime = mediaRecorder.mimeType || 'video/webm';
-                    const extension = actualMime.includes('mp4') ? 'mp4' : 'webm';
-                    const fileName = `Dark_Recording_${Date.now()}.${extension}`;
+                    const actualMime = mediaRecorder.mimeType || 'audio/webm';
+                    const extension = actualMime.includes('ogg') ? 'ogg' : 'webm';
+                    const fileName = `Dark_Audio_Note_${Date.now()}.${extension}`;
 
                     const blob = new Blob(recordedChunks, { type: actualMime });
                     recordedFile = new File([blob], fileName, { type: actualMime });
                     recordedBlobUrl = URL.createObjectURL(blob);
                     
-                    playbackVideo.src = recordedBlobUrl;
-                    playbackVideo.style.display = 'block';
+                    playbackAudio.src = recordedBlobUrl;
+                    playbackAudio.style.display = 'block';
 
                     shareBtn.style.display = 'block';
                     downloadBtn.style.display = 'block';
@@ -289,7 +251,7 @@
                 overlay.style.display = 'flex';
 
             } catch (err) {
-                errorMsg.innerText = "Camera access error: " + err.message;
+                errorMsg.innerText = "Microphone permission error: " + err.message;
                 errorMsg.style.display = 'block';
             }
         });
@@ -306,7 +268,7 @@
             if (recordedFile && navigator.canShare && navigator.canShare({ files: [recordedFile] })) {
                 try {
                     await navigator.share({
-                        title: 'Dark Screen Recording',
+                        title: 'Dark Screen Audio Note',
                         text: 'Recorded via Dark Screen Assistant',
                         files: [recordedFile]
                     });
@@ -325,7 +287,7 @@
             if (recordedBlobUrl) {
                 const a = document.createElement('a');
                 a.href = recordedBlobUrl;
-                a.download = recordedFile ? recordedFile.name : 'Dark_Recording.webm';
+                a.download = recordedFile ? recordedFile.name : 'Dark_Audio_Note.webm';
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
@@ -334,3 +296,4 @@
     </script>
 </body>
 </html>
+
