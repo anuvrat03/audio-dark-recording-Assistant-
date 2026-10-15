@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dark Screen Assistant</title>
     <style>
-        /* Modern Dark Theme for Samsung Galaxy S20 FE */
+        /* Modern Dark Theme Tailored for Samsung Galaxy S20 FE */
         * {
             box-sizing: border-box;
         }
@@ -84,7 +84,7 @@
             background-color: #4f46e5;
         }
 
-        /* Full Blackout Overlay to Eliminate Distraction & Glare */
+        /* Full Blackout Overlay to Eliminate Distraction & Save Battery */
         #recording-overlay {
             position: fixed;
             top: 0;
@@ -104,6 +104,7 @@
             font-size: 0.95rem;
             font-weight: 600;
             letter-spacing: 1px;
+            margin-bottom: 180px; /* Leaves clean comfortable room for the Stop button above screen bottom */
             animation: pulse 1.8s infinite;
         }
 
@@ -113,37 +114,41 @@
             100% { opacity: 0.3; }
         }
 
-        /* Faded Grey Floating Stop Control */
+        /* Prominent, Thumb-Friendly Stop Control Raised Higher On Screen */
         #stop-btn {
             position: fixed;
-            bottom: 40px;
-            right: 30px;
-            background-color: rgba(100, 116, 139, 0.35);
-            color: rgba(255, 255, 255, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            padding: 12px 22px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            border-radius: 30px;
+            bottom: 120px; /* Positioned significantly higher off the bottom edge for easy thumb reach */
+            left: 50%;
+            transform: translateX(-50%); /* Centers horizontally for natural one-handed holding */
+            background-color: rgba(71, 85, 105, 0.75); /* Soft, comfortable grey-blue background */
+            color: #ffffff;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            padding: 16px 36px; /* Generous touch area for easy tapping */
+            font-size: 1.05rem;
+            font-weight: 700;
+            border-radius: 35px;
             cursor: pointer;
             z-index: 10000;
             display: none;
-            backdrop-filter: blur(4px);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+            transition: all 0.2s ease;
         }
 
         #stop-btn:active {
-            background-color: rgba(225, 29, 72, 0.85);
+            background-color: rgba(225, 29, 72, 0.95);
             color: #ffffff;
+            transform: translateX(-50%) scale(0.96);
         }
 
         /* Embedded Playback Player */
-        video, audio {
+        video {
             width: 100%;
             margin-top: 15px;
             margin-bottom: 15px;
             border-radius: 10px;
             display: none;
-            background-color: #000;
+            background-color: #000000;
         }
 
         .error-msg {
@@ -162,7 +167,7 @@
 
     <div class="card" id="main-card">
         <h2>Dark Screen Assistant</h2>
-        <p>Records lecture notes with a pitch-black screen to eliminate distraction and save battery power.</p>
+        <p>Records video and audio with a pitch-black screen to eliminate glare, maintain focus, and save battery.</p>
         
         <div id="error-msg" class="error-msg"></div>
 
@@ -177,11 +182,11 @@
 
     <!-- Pitch Black Overlay Screen -->
     <div id="recording-overlay">
-        <div class="recording-status">● RECORDING (DARK DISPLAY)</div>
+        <div class="recording-status">● RECORDING (REAR CAMERA)</div>
     </div>
 
-    <!-- Floating Faded Grey Stop Control -->
-    <button id="stop-btn">Stop Recording</button>
+    <!-- Prominent Raised Stop Control -->
+    <button id="stop-btn">⏹ Stop Recording</button>
 
     <script>
         let mediaRecorder;
@@ -207,28 +212,19 @@
             recordedChunks = [];
 
             try {
-                // First attempt screen capture if supported, otherwise fallback to camera/microphone
-                if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
-                    try {
-                        mediaStream = await navigator.mediaDevices.getDisplayMedia({
-                            video: { mediaSource: "screen" },
-                            audio: true
-                        });
-                    } catch (displayErr) {
-                        // Fallback to front camera/audio stream on mobile browsers
-                        mediaStream = await navigator.mediaDevices.getUserMedia({
-                            video: { facingMode: "user" },
-                            audio: true
-                        });
-                    }
-                } else {
-                    mediaStream = await navigator.mediaDevices.getUserMedia({
-                        video: { facingMode: "user" },
+                // Request REAR camera ("environment") and high-clarity microphone audio stream
+                mediaStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: { exact: "environment" } },
+                    audio: true
+                }).catch(async () => {
+                    // Fallback to general rear camera if exact constraint is restricted
+                    return await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: "environment" },
                         audio: true
                     });
-                }
+                });
 
-                // Determine appropriate supported codec
+                // Select supported video encoding format
                 let mimeType = 'video/webm';
                 if (!MediaRecorder.isTypeSupported('video/webm')) {
                     mimeType = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4' : '';
@@ -252,35 +248,35 @@
                     recordedFile = new File([blob], fileName, { type: actualMime });
                     recordedBlobUrl = URL.createObjectURL(blob);
                     
-                    // Display preview player
+                    // Display playback video
                     playbackVideo.src = recordedBlobUrl;
                     playbackVideo.style.display = 'block';
 
-                    // Reveal action buttons
+                    // Reveal share and download options
                     shareBtn.style.display = 'block';
                     downloadBtn.style.display = 'block';
 
-                    // Restore setup interface
+                    // Restore interface view
                     overlay.style.display = 'none';
                     stopBtn.style.display = 'none';
                     mainCard.style.display = 'block';
 
-                    // Cleanly shutdown hardware streams
+                    // Safely release phone camera and microphone hardware
                     if (mediaStream) {
                         mediaStream.getTracks().forEach(track => track.stop());
                     }
                 };
 
-                // Begin data recording
+                // Begin data stream recording
                 mediaRecorder.start(1000);
 
-                // Switch UI to Blackout mode
+                // Switch UI to Blackout mode with raised stop button
                 mainCard.style.display = 'none';
                 overlay.style.display = 'flex';
                 stopBtn.style.display = 'block';
 
             } catch (err) {
-                errorMsg.innerText = "Permission error: " + err.message + ". Hosting this file on GitHub Pages resolves this issue.";
+                errorMsg.innerText = "Camera access error: " + err.message + ". Make sure site permissions allow camera/mic access.";
                 errorMsg.style.display = 'block';
             }
         });
@@ -307,11 +303,11 @@
                     }
                 }
             } else {
-                alert('Direct file sharing is not supported by your current browser view. Use the Download button to save the file locally!');
+                alert('Direct file sharing is not supported by your current browser view. Use the Save to Phone Downloads button!');
             }
         });
 
-        // Direct Download / Save Action
+        // Direct Local Download Action
         downloadBtn.addEventListener('click', () => {
             if (recordedBlobUrl) {
                 const a = document.createElement('a');
