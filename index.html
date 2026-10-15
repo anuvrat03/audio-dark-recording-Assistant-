@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dark Audio Assistant & Translator</title>
+    <title>Dark Speech & Translation Assistant</title>
     <style>
-        /* Modern Dark Theme Tailored for Samsung Galaxy S20 FE Screen */
+        /* Modern Dark Theme Tailored for Samsung Galaxy S20 FE */
         * {
             box-sizing: border-box;
         }
@@ -47,35 +47,6 @@
             line-height: 1.4;
         }
 
-        /* Input Field Group for Free Google Gemini API Key */
-        .api-input-group {
-            margin-bottom: 15px;
-            text-align: left;
-        }
-
-        .api-input-group label {
-            font-size: 0.8rem;
-            color: #38bdf8;
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-        }
-
-        .api-input {
-            width: 100%;
-            padding: 10px 14px;
-            background-color: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 8px;
-            color: #f8fafc;
-            font-size: 0.85rem;
-            outline: none;
-        }
-
-        .api-input:focus {
-            border-color: #38bdf8;
-        }
-
         .btn {
             background-color: #0284c7;
             color: #ffffff;
@@ -107,7 +78,7 @@
             display: none;
         }
 
-        /* Full Blackout Screen Overlay */
+        /* Full Blackout Overlay */
         #recording-overlay {
             position: fixed;
             top: 0;
@@ -125,7 +96,7 @@
 
         .recording-status {
             color: #ef4444;
-            font-size: 0.95rem;
+            font-size: 1rem;
             font-weight: 600;
             letter-spacing: 1px;
             animation: pulse 1.8s infinite;
@@ -137,7 +108,7 @@
             100% { opacity: 0.3; }
         }
 
-        /* Prominent Thumb-Friendly Stop Control */
+        /* Prominent Stop Button For One-Thumb Access */
         #stop-btn {
             background-color: #334155;
             color: #ffffff;
@@ -157,14 +128,7 @@
             border-color: #ef4444;
         }
 
-        audio {
-            width: 100%;
-            margin-top: 15px;
-            margin-bottom: 15px;
-            display: none;
-        }
-
-        /* Output Box for Translation Results */
+        /* Transcription & Translation Output Box */
         .output-box {
             background: #0f172a;
             border: 1px solid #334155;
@@ -190,13 +154,6 @@
             white-space: pre-wrap;
         }
 
-        .loading-text {
-            color: #fbbf24;
-            font-size: 0.85rem;
-            margin-top: 10px;
-            display: none;
-        }
-
         .error-msg {
             color: #f43f5e;
             background-color: rgba(244, 63, 94, 0.1);
@@ -212,49 +169,34 @@
 <body>
 
     <div class="card" id="main-card">
-        <h2>Dark Audio & Translator</h2>
-        <p>Records voice notes in pitch-black mode, then translates them into English and Hindi using Google Gemini AI.</p>
+        <h2>Dark Speech Assistant</h2>
+        <p>Record notes in pitch-black mode. Automatically captures your speech in English or Hindi instantly for free with zero API keys.</p>
         
-        <!-- On-Screen API Key Input (Saved Privately on Phone) -->
-        <div class="api-input-group">
-            <label for="api-key-input">🔑 Google Gemini API Key (Free):</label>
-            <input type="password" id="api-key-input" class="api-input" placeholder="Paste your free Gemini API key here...">
-        </div>
-
         <div id="error-msg" class="error-msg"></div>
 
         <button class="btn" id="start-btn">Start Dark Recording</button>
 
-        <audio id="playback-audio" controls></audio>
-
-        <div id="loading-box" class="loading-text">⏳ Processing AI Transcription & Translation...</div>
-
-        <!-- Translation Results Container -->
+        <!-- Results Container -->
         <div id="results-box" class="output-box">
-            <h4>🇬🇧 English Translation:</h4>
-            <p id="english-text">-</p>
-            <h4>🇮🇳 Hindi Translation (हिंदी):</h4>
-            <p id="hindi-text">-</p>
+            <h4>🗣️ Captured Speech / Transcript:</h4>
+            <p id="transcript-text">-</p>
         </div>
 
-        <!-- Action Buttons for Native Sharing & Download -->
-        <button class="btn btn-share" id="share-btn">📲 Share Note & Translations</button>
-        <button class="btn btn-download" id="download-btn">💾 Save Audio to Phone</button>
+        <!-- Action Buttons for Native Sharing & Download Text -->
+        <button class="btn btn-share" id="share-btn">📲 Share Transcript & Notes</button>
+        <button class="btn btn-download" id="download-btn">💾 Save Notes as Text File</button>
     </div>
 
     <!-- Blackout Overlay Screen -->
     <div id="recording-overlay">
-        <div class="recording-status">● RECORDING AUDIO (DARK DISPLAY)</div>
+        <div class="recording-status">● LISTENING & TRANSCRIBING (DARK SCREEN)</div>
         <button id="stop-btn">⏹ STOP RECORDING</button>
     </div>
 
     <script>
-        let mediaRecorder;
-        let recordedChunks = [];
-        let mediaStream = null;
-        let recordedFile = null;
-        let recordedBlobUrl = null;
-        let translationSummary = "";
+        let recognition;
+        let finalTranscript = "";
+        let isRecording = false;
 
         const startBtn = document.getElementById('start-btn');
         const stopBtn = document.getElementById('stop-btn');
@@ -262,203 +204,117 @@
         const downloadBtn = document.getElementById('download-btn');
         const overlay = document.getElementById('recording-overlay');
         const mainCard = document.getElementById('main-card');
-        const playbackAudio = document.getElementById('playback-audio');
         const errorMsg = document.getElementById('error-msg');
-        const loadingBox = document.getElementById('loading-box');
         const resultsBox = document.getElementById('results-box');
-        const englishText = document.getElementById('english-text');
-        const hindiText = document.getElementById('hindi-text');
-        const apiKeyInput = document.getElementById('api-key-input');
+        const transcriptText = document.getElementById('transcript-text');
 
-        // Load saved API key from browser local storage on startup
-        window.addEventListener('DOMContentLoaded', () => {
-            const savedKey = localStorage.getItem('gemini_api_key');
-            if (savedKey) {
-                apiKeyInput.value = savedKey;
-            }
-        });
+        // Initialize Browser Speech Recognition API
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        
+        if (!SpeechRecognition) {
+            errorMsg.innerText = "Speech recognition is not supported on this browser. Please use Google Chrome.";
+            errorMsg.style.display = 'block';
+            startBtn.disabled = true;
+        } else {
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'en-IN'; // Set to Indian English & bilingual speech support
 
-        // Save key locally on edit
-        apiKeyInput.addEventListener('change', () => {
-            localStorage.setItem('gemini_api_key', apiKeyInput.value.trim());
-        });
+            recognition.onresult = (event) => {
+                let interim = "";
+                finalTranscript = "";
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript += event.results[i][0].transcript;
+                    } else {
+                        interim += event.results[i][0].transcript;
+                    }
+                }
+                transcriptText.innerText = finalTranscript || interim || "Listening...";
+            };
+
+            recognition.onerror = (event) => {
+                console.error("Speech recognition error", event.error);
+            };
+
+            recognition.onend = () => {
+                if (isRecording) {
+                    try { recognition.start(); } catch (e) {}
+                }
+            };
+        }
 
         // Start Recording Process
-        startBtn.addEventListener('click', async () => {
-            const currentApiKey = apiKeyInput.value.trim();
-            if (!currentApiKey) {
-                errorMsg.innerText = "Please paste your free Google Gemini API key above before recording.";
-                errorMsg.style.display = 'block';
-                return;
-            } else {
-                localStorage.setItem('gemini_api_key', currentApiKey);
-            }
-
+        startBtn.addEventListener('click', () => {
             errorMsg.style.display = 'none';
-            shareBtn.style.display = 'none';
-            downloadBtn.style.display = 'none';
             resultsBox.style.display = 'none';
-            recordedChunks = [];
+            finalTranscript = "";
+            transcriptText.innerText = "";
 
-            try {
-                mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-                let mimeType = 'audio/webm';
-                if (!MediaRecorder.isTypeSupported('audio/webm')) {
-                    mimeType = MediaRecorder.isTypeSupported('audio/ogg') ? 'audio/ogg' : '';
+            if (recognition) {
+                try {
+                    isRecording = true;
+                    recognition.start();
+                    mainCard.style.display = 'none';
+                    overlay.style.display = 'flex';
+                } catch (err) {
+                    errorMsg.innerText = "Could not start speech recognition: " + err.message;
+                    errorMsg.style.display = 'block';
                 }
-
-                const options = mimeType ? { mimeType } : {};
-                mediaRecorder = new MediaRecorder(mediaStream, options);
-
-                mediaRecorder.ondataavailable = (event) => {
-                    if (event.data && event.data.size > 0) {
-                        recordedChunks.push(event.data);
-                    }
-                };
-
-                mediaRecorder.onstop = async () => {
-                    const actualMime = mediaRecorder.mimeType || 'audio/webm';
-                    const extension = actualMime.includes('ogg') ? 'ogg' : 'webm';
-                    const fileName = `Dark_Audio_Note_${Date.now()}.${extension}`;
-
-                    const blob = new Blob(recordedChunks, { type: actualMime });
-                    recordedFile = new File([blob], fileName, { type: actualMime });
-                    recordedBlobUrl = URL.createObjectURL(blob);
-                    
-                    playbackAudio.src = recordedBlobUrl;
-                    playbackAudio.style.display = 'block';
-
-                    shareBtn.style.display = 'block';
-                    downloadBtn.style.display = 'block';
-
-                    overlay.style.display = 'none';
-                    mainCard.style.display = 'block';
-
-                    if (mediaStream) {
-                        mediaStream.getTracks().forEach(track => track.stop());
-                    }
-
-                    // Process Translation via Google Gemini API
-                    await processAudioWithGemini(blob, currentApiKey);
-                };
-
-                mediaRecorder.start(1000);
-
-                mainCard.style.display = 'none';
-                overlay.style.display = 'flex';
-
-            } catch (err) {
-                errorMsg.innerText = "Microphone error: " + err.message;
-                errorMsg.style.display = 'block';
             }
         });
 
         // Stop Recording
         stopBtn.addEventListener('click', () => {
-            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                mediaRecorder.stop();
+            isRecording = false;
+            if (recognition) {
+                recognition.stop();
+            }
+
+            overlay.style.display = 'none';
+            mainCard.style.display = 'block';
+
+            if (finalTranscript.trim() !== "") {
+                transcriptText.innerText = finalTranscript;
+                resultsBox.style.display = 'block';
+                shareBtn.style.display = 'block';
+                downloadBtn.style.display = 'block';
+            } else {
+                transcriptText.innerText = "No speech detected. Please try again.";
+                resultsBox.style.display = 'block';
             }
         });
-
-        // Process Audio File using Google Gemini 3.8 Flash Endpoint
-        async function processAudioWithGemini(audioBlob, apiKey) {
-            loadingBox.style.display = 'block';
-
-            try {
-                const reader = new FileReader();
-                reader.readAsDataURL(audioBlob);
-                reader.onloadend = async () => {
-                    const base64Audio = reader.result.split(',')[1];
-                    const mimeType = audioBlob.type || 'audio/webm';
-
-                    // Updated model endpoint as requested by AI Studio: gemini-3.8-flash
-                    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
-
-                    const requestPayload = {
-                        contents: [{
-                            parts: [
-                                {
-                                    text: "Listen to this recorded audio note carefully. Provide two outputs: 1. Clean translation/transcription in English. 2. Clean translation in Hindi (हिंदी). Format your response strictly as JSON with keys 'english' and 'hindi'."
-                                },
-                                {
-                                    inline_data: {
-                                        mime_type: mimeType,
-                                        data: base64Audio
-                                    }
-                                }
-                            ]
-                        }]
-                    };
-
-                    const response = await fetch(geminiUrl, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(requestPayload)
-                    });
-
-                    const data = await response.json();
-                    loadingBox.style.display = 'none';
-
-                    if (data.candidates && data.candidates[0]) {
-                        let content = data.candidates[0].content.parts[0].text;
-                        try {
-                            if (content.includes('```json')) {
-                                content = content.split('```json')[1].split('```')[0].trim();
-                            } else if (content.includes('```')) {
-                                content = content.split('```')[1].split('```')[0].trim();
-                            }
-                            const parsed = JSON.parse(content);
-                            englishText.innerText = parsed.english || "Transcription complete.";
-                            hindiText.innerText = parsed.hindi || "अनुवाद उपलब्ध है।";
-                            translationSummary = `\n\n--- TRANSLATIONS ---\nEnglish: ${parsed.english}\nHindi: ${parsed.hindi}`;
-                        } catch (parseErr) {
-                            englishText.innerText = content;
-                            hindiText.innerText = "See English transcript above.";
-                            translationSummary = `\n\n--- TRANSCRIPT ---\n${content}`;
-                        }
-                        resultsBox.style.display = 'block';
-                    } else {
-                        errorMsg.innerText = "Gemini processing error: " + (data.error?.message || "Invalid API Key or response");
-                        errorMsg.style.display = 'block';
-                    }
-                };
-            } catch (err) {
-                loadingBox.style.display = 'none';
-                errorMsg.innerText = "Translation error: " + err.message;
-                errorMsg.style.display = 'block';
-            }
-        }
 
         // Native Android Share Functionality
         shareBtn.addEventListener('click', async () => {
-            if (recordedFile && navigator.canShare && navigator.canShare({ files: [recordedFile] })) {
+            const shareText = `--- DARK SPEECH NOTE ---\n${finalTranscript}`;
+            if (navigator.share) {
                 try {
                     await navigator.share({
-                        title: 'Dark Audio Note & Translation',
-                        text: 'Here is my recorded audio note and translations.' + translationSummary,
-                        files: [recordedFile]
+                        title: 'Dark Speech Note',
+                        text: shareText
                     });
-                } catch (shareError) {
-                    if (shareError.name !== 'AbortError') {
-                        alert('Share error: ' + shareError.message);
+                } catch (err) {
+                    if (err.name !== 'AbortError') {
+                        alert('Share error: ' + err.message);
                     }
                 }
             } else {
-                alert('Direct file sharing not supported on this view. Use the Download button!');
+                alert('Sharing not supported on this view.');
             }
         });
 
-        // Direct Download Action
+        // Direct Download as Text File
         downloadBtn.addEventListener('click', () => {
-            if (recordedBlobUrl) {
-                const a = document.createElement('a');
-                a.href = recordedBlobUrl;
-                a.download = recordedFile ? recordedFile.name : 'Dark_Audio_Note.webm';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-            }
+            const blob = new Blob([finalTranscript], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Speech_Note_${Date.now()}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         });
     </script>
 </body>
