@@ -361,7 +361,7 @@
             }
         });
 
-        // Process Audio File using Google Gemini REST Endpoint with Automatic Fallback
+        // Process Audio File using the stable Google Gemini 2.5 Flash Endpoint
         async function processAudioWithGemini(audioBlob, apiKey) {
             loadingBox.style.display = 'block';
 
@@ -372,9 +372,8 @@
                     const base64Audio = reader.result.split(',')[1];
                     const mimeType = audioBlob.type || 'audio/webm';
 
-                    // Primary active endpoint: gemini-1.5-flash
-                    let primaryUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-                    let fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`;
+                    // Active stable model endpoint: gemini-2.5-flash
+                    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
                     const requestPayload = {
                         contents: [{
@@ -392,24 +391,13 @@
                         }]
                     };
 
-                    let response = await fetch(primaryUrl, {
+                    const response = await fetch(geminiUrl, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(requestPayload)
                     });
 
-                    let data = await response.json();
-
-                    // Fallback execution if primary endpoint encounters model notice
-                    if (data.error && data.error.message && data.error.message.includes('not found')) {
-                        response = await fetch(fallbackUrl, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify(requestPayload)
-                        });
-                        data = await response.json();
-                    }
-
+                    const data = await response.json();
                     loadingBox.style.display = 'none';
 
                     if (data.candidates && data.candidates[0]) {
