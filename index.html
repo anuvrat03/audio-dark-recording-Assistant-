@@ -361,7 +361,7 @@
             }
         });
 
-        // Process Audio File using Google Gemini 2.5 Flash REST Endpoint
+        // Process Audio File using Google Gemini REST Endpoint with Automatic Fallback
         async function processAudioWithGemini(audioBlob, apiKey) {
             loadingBox.style.display = 'block';
 
@@ -372,32 +372,44 @@
                     const base64Audio = reader.result.split(',')[1];
                     const mimeType = audioBlob.type || 'audio/webm';
 
-                    // Updated REST API endpoint for Gemini 2.5 Flash
-                    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+                    // Primary active endpoint: gemini-1.5-flash
+                    let primaryUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+                    let fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`;
 
-                    const response = await fetch(url, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({
-                            contents: [{
-                                parts: [
-                                    {
-                                        text: "Listen to this recorded audio note carefully. Provide two outputs: 1. Clean translation/transcription in English. 2. Clean translation in Hindi (हिंदी). Format your response strictly as JSON with keys 'english' and 'hindi'."
-                                    },
-                                    {
-                                        inline_data: {
-                                            mime_type: mimeType,
-                                            data: base64Audio
-                                        }
+                    const requestPayload = {
+                        contents: [{
+                            parts: [
+                                {
+                                    text: "Listen to this recorded audio note carefully. Provide two outputs: 1. Clean translation/transcription in English. 2. Clean translation in Hindi (हिंदी). Format your response strictly as JSON with keys 'english' and 'hindi'."
+                                },
+                                {
+                                    inline_data: {
+                                        mime_type: mimeType,
+                                        data: base64Audio
                                     }
-                                ]
-                            }]
-                        })
+                                }
+                            ]
+                        }]
+                    };
+
+                    let response = await fetch(primaryUrl, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(requestPayload)
                     });
 
-                    const data = await response.json();
+                    let data = await response.json();
+
+                    // Fallback execution if primary endpoint encounters model notice
+                    if (data.error && data.error.message && data.error.message.includes('not found')) {
+                        response = await fetch(fallbackUrl, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(requestPayload)
+                        });
+                        data = await response.json();
+                    }
+
                     loadingBox.style.display = 'none';
 
                     if (data.candidates && data.candidates[0]) {
