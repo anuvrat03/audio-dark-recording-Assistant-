@@ -361,7 +361,7 @@
             }
         });
 
-        // Process Audio File using the stable Google Gemini 2.5 Flash Endpoint
+        // Process Audio File using Google Gemini 3.8 Flash Endpoint
         async function processAudioWithGemini(audioBlob, apiKey) {
             loadingBox.style.display = 'block';
 
@@ -372,8 +372,8 @@
                     const base64Audio = reader.result.split(',')[1];
                     const mimeType = audioBlob.type || 'audio/webm';
 
-                    // Active stable model endpoint: gemini-2.5-flash
-                    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+                    // Updated model endpoint as requested by AI Studio: gemini-3.8-flash
+                    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`;
 
                     const requestPayload = {
                         contents: [{
